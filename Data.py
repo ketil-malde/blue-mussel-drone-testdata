@@ -28,8 +28,8 @@ def group_annotations(polys):
 class Data:
     def get(self, conf):
         '''Download and upack the data'''
-        # os.system(f'scp {datasrc} .')
-        # os.system(f'unzip {os.path.basename(datasrc)}')
+        os.system(f'scp {datasrc} .')
+        os.system(f'unzip {os.path.basename(datasrc)}')
         with open(f'Bildeserie_2/output_tracks.csv') as file:
             lines = [line.rstrip() for line in file.readlines() if line[0] != '#']
 
