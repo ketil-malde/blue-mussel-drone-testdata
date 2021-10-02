@@ -28,6 +28,10 @@ def group_annotations(polys):
 class Data:
     def get(self, conf):
         '''Download and upack the data'''
+        if os.path.exists('images'):
+            print('The "images" directory exists already - skipping data download!')
+            return
+
         os.system(f'scp {datasrc} .')
         os.system(f'unzip {os.path.basename(datasrc)}')
         with open(f'Bildeserie_2/output_tracks.csv') as file:
