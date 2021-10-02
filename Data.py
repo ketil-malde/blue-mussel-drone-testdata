@@ -26,7 +26,11 @@ def group_annotations(polys):
     print()
 
 class Data:
-    def get(self, conf):
+    def __init__(self, conf, mypath):
+        self.config = conf
+        self.mypath = mypath
+
+    def get(self):
         '''Download and upack the data'''
         if os.path.exists('images'):
             print('The "images" directory exists already - skipping data download!')
@@ -57,7 +61,7 @@ class Data:
                 cv2.fillPoly(mask, [np.array(poly)], 1)
             cv2.imwrite('masks/'+im+'.png', mask * 255)
 
-    def validate(self, conf):
+    def validate(self):
         '''Check data completeness and integrity'''
         pass
 
