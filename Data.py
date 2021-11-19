@@ -10,6 +10,8 @@ H, W = 3078, 5472
 
 datasrc = 'dedun:/data/deep/data//blue_mussel_drone_images/Bildeserie_2.zip'
 
+defaultconfig = {}
+
 def group_annotations(polys):
     '''Generator for images with all polygon annotations'''
     imgname = polys[0][1]
@@ -26,7 +28,10 @@ def group_annotations(polys):
     print()
 
 class Data:
-    def get(self, conf):
+    def __init__(self, conf):
+        self.config = conf
+
+    def get(self):
         '''Download and upack the data'''
         if os.path.exists('images'):
             print('The "images" directory exists already - skipping data download!')
@@ -57,11 +62,11 @@ class Data:
                 cv2.fillPoly(mask, [np.array(poly)], 1)
             cv2.imwrite('masks/'+im+'.png', mask * 255)
 
-    def validate(self, conf):
+    def validate(self):
         '''Check data completeness and integrity'''
         pass
 
 if __name__ == '__main__':
-    d = Data()
+    d = Data(defaultconfig, '')
     d.get()
     d.validate()
