@@ -67,6 +67,6 @@ class Data:
         pass
 
 if __name__ == '__main__':
-    d = Data(defaultconfig, '')
+    d = Data(defaultconfig)
     d.get()
     d.validate()
