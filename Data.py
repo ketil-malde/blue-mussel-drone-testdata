@@ -1,6 +1,7 @@
 
 import os
 import os.path
+import subprocess
 
 import cv2
 import numpy as np
@@ -8,7 +9,7 @@ import matplotlib.pyplot as plt
 
 H, W = 3078, 5472
 
-datasrc = 'dedun:/data/deep/data//blue_mussel_drone_images/Bildeserie_2.zip'
+datasrc = 'dedun:/data/prosjekt/15619-04-Blaskjellbestand/BILDER TIL MASKINLÆRING/VIAME Output Data'
 
 defaultconfig = {}
 
@@ -34,33 +35,38 @@ class Data:
     def get(self):
         '''Download and upack the data'''
         if os.path.exists('images'):
-            print('The "images" directory exists already - skipping data download!')
+            print('The "images" directory exists already - skipping!')
             return
 
-        os.system(f'scp {datasrc} .')
-        os.system(f'unzip {os.path.basename(datasrc)}')
-        with open(f'Bildeserie_2/output_tracks.csv') as file:
-            lines = [line.rstrip() for line in file.readlines() if line[0] != '#']
+        sp = subprocess.Popen(['rsync','-au',f'{datasrc}/'.replace(' ','\ '), 'tmp/'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = sp.communicate()[0]
 
-        annotations = []
-        for line in lines:
-            fields = line.split(',')
-            no, imgname, bbox, anno = int(fields[0]), fields[1], [int(f) for f in fields[3:7]], fields[9]
-            if anno != 'M.edulis': continue
-            poly = fields[11].split()
-            polytype = poly[0]
-            points = [[int(poly[2*i+1]), int(poly[2*i+2])] for i in range((len(poly)-1)//2)]
-            assert(points[0]==points[-1])
-            annotations.append( (no, imgname, bbox, anno, polytype, points) )
-
+        datadirs = os.listdir('tmp')
         os.mkdir('masks')
         os.mkdir('images')
-        for (im, polys) in group_annotations(annotations):
-            os.system(f'cp Bildeserie_2/{im} images/')
-            mask = np.zeros((H,W))
-            for poly in polys:
-                cv2.fillPoly(mask, [np.array(poly)], 1)
-            cv2.imwrite('masks/'+im+'.png', mask * 255)
+
+        for d in datadirs:
+            with open(f'tmp/{d}/output_tracks.csv') as file:
+                lines = [line.rstrip() for line in file.readlines() if line[0] != '#']
+
+            annotations = []
+            for line in lines:
+                fields = line.split(',')
+                no, imgname, bbox, anno = int(fields[0]), fields[1], [int(f) for f in fields[3:7]], fields[9]
+                if anno != 'M.edulis': continue
+                poly = fields[11].split()
+                polytype = poly[0]
+                points = [[int(poly[2*i+1]), int(poly[2*i+2])] for i in range((len(poly)-1)//2)]
+                assert(points[0]==points[-1])
+                annotations.append( (no, imgname, bbox, anno, polytype, points) )
+
+            for (im, polys) in group_annotations(annotations):
+                os.system(f'cp tmp/{d}/{im} images/')
+                # TODO: get H,W from im
+                mask = np.zeros((H,W))
+                for poly in polys:
+                    cv2.fillPoly(mask, [np.array(poly)], 1)
+                cv2.imwrite('masks/'+im+'.png', mask * 255)
 
     def validate(self):
         '''Check data completeness and integrity'''
