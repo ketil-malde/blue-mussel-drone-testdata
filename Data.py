@@ -7,13 +7,11 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-H, W = 3078, 5472
-
 datasrc = 'dedun:/data/prosjekt/15619-04-Blaskjellbestand/BILDER TIL MASKINLÆRING/VIAME Output Data'
 
 defaultconfig = {}
 
-def group_annotations(polys):
+def group_annotations(polys, ddir=''):
     '''Generator for images with all polygon annotations'''
     imgname = polys[0][1]
     cur = [polys[0][-1]]
@@ -22,7 +20,7 @@ def group_annotations(polys):
         if pt[1] == imgname:
             cur.append(pt[-1])
         else:
-            print('Writing: ', imgname, end='\r')
+            print(f'{ddir} Writing: {imgname}', end='\r')
             yield ((imgname,cur))
             imgname = pt[1]
             cur = [pt[-1]]
@@ -60,9 +58,10 @@ class Data:
                 assert(points[0]==points[-1])
                 annotations.append( (no, imgname, bbox, anno, polytype, points) )
 
-            for (im, polys) in group_annotations(annotations):
+            for (im, polys) in group_annotations(annotations, d):
                 os.system(f'cp tmp/{d}/{im} images/')
-                # TODO: get H,W from im
+                img = cv2.imread(f'images/{im}')
+                H, W, _C = img.shape
                 mask = np.zeros((H,W))
                 for poly in polys:
                     cv2.fillPoly(mask, [np.array(poly)], 1)
