@@ -36,12 +36,14 @@ class Data:
             print('The "images" directory exists already - skipping!')
             return
 
+        print('Syncing data...')
         sp = subprocess.Popen(['rsync','-au',f'{datasrc}/'.replace(' ','\ '), 'tmp/'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = sp.communicate()[0]
 
         datadirs = os.listdir('tmp')
         os.mkdir('masks')
         os.mkdir('images')
+        os.mkdir('test')
 
         for d in datadirs:
             with open(f'tmp/{d}/output_tracks.csv') as file:
@@ -66,6 +68,13 @@ class Data:
                 for poly in polys:
                     cv2.fillPoly(mask, [np.array(poly)], 1)
                 cv2.imwrite('masks/'+im+'.png', mask * 255)
+
+        # Copy all remaining images into test/
+        all_images = os.listdir('images')
+        for d in datadirs:
+            for f in os.listdir(f'tmp/{d}'):
+                if (f[-3:]=='JPG' or f[-3:]=='jpg') and f not in all_images:
+                    os.system(f'cp tmp/{d}/{f} test/')
 
     def validate(self):
         '''Check data completeness and integrity'''
