@@ -78,7 +78,7 @@ class Data:
         all_images = os.listdir('images')
         for d in datadirs:
             for f in os.listdir(f'tmp/{d}'):
-                if (f[-3:]=='JPG' or f[-3:]=='jpg') and f not in all_images:
+                if (f[-3:]=='JPG' or f[-3:]=='jpg') and d+':'+f not in all_images:
                     os.system(f'cp tmp/{d}/{f} test/{d}:{f}')
 
     def validate(self):
