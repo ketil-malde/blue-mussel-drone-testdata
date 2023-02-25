@@ -39,6 +39,7 @@ class Data:
         print('Syncing data...')
         sp = subprocess.Popen(['rsync','-au',f'{datasrc}/'.replace(' ','\ '), 'tmp/'], shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = sp.communicate()[0]
+        print('Syncing done:', output)
 
         datadirs = os.listdir('tmp')
         os.mkdir('masks')
@@ -53,7 +54,9 @@ class Data:
             for line in lines:
                 fields = line.split(',')
                 no, imgname, bbox, anno = int(fields[0]), fields[1], [int(f) for f in fields[3:7]], fields[9]
-                if anno != 'M.edulis': continue
+                if anno != 'M. edulis':
+                    print(f'*** Illegal annotation: {anno}!')
+                    continue
                 poly = fields[11].split()
                 polytype = poly[0]
                 points = [[int(poly[2*i+1]), int(poly[2*i+2])] for i in range((len(poly)-1)//2)]
@@ -61,20 +64,22 @@ class Data:
                 annotations.append( (no, imgname, bbox, anno, polytype, points) )
 
             for (im, polys) in group_annotations(annotations, d):
-                os.system(f'cp tmp/{d}/{im} images/')
-                img = cv2.imread(f'images/{im}')
+                outname = d+':'+im
+                os.system(f'cp tmp/{d}/{im} images/{outname}')
+                img = cv2.imread(f'images/{outname}')
+                assert img is not None, print(f'images/{outname} is None?')
                 H, W, _C = img.shape
                 mask = np.zeros((H,W))
                 for poly in polys:
                     cv2.fillPoly(mask, [np.array(poly)], 1)
-                cv2.imwrite('masks/'+im+'.png', mask * 255)
+                cv2.imwrite('masks/'+outname+'.png', mask * 255)
 
         # Copy all remaining images into test/
         all_images = os.listdir('images')
         for d in datadirs:
             for f in os.listdir(f'tmp/{d}'):
                 if (f[-3:]=='JPG' or f[-3:]=='jpg') and f not in all_images:
-                    os.system(f'cp tmp/{d}/{f} test/')
+                    os.system(f'cp tmp/{d}/{f} test/{d}:{f}')
 
     def validate(self):
         '''Check data completeness and integrity'''
